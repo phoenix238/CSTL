@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CSTL Control Tower</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Work+Sans:wght@400;500;600;700&display=swap">
+<style>
+  html, body { margin: 0; height: 100%; }
+  * { box-sizing: border-box; }
+  ::placeholder { color: oklch(0.62 0.02 60); }
+  @keyframes ct-pulse { 0%,100% { opacity: 1 } 50% { opacity: 0.45 } }
+
+  /* nav items */
+  .nav-item { display:flex; align-items:center; justify-content:space-between;
+    padding:9px 12px; border-radius:10px; font-size:13.5px; cursor:pointer;
+    user-select:none; background:transparent; color:oklch(0.4 0.03 55); font-weight:500; }
+  .nav-item:hover { background:oklch(0.94 0.015 82); }
+  .nav-item.active { background:oklch(0.94 0.03 48); color:oklch(0.42 0.1 42); font-weight:600; }
+
+  /* generic hover helpers */
+  .btn-primary { font:600 13.5px 'Work Sans',sans-serif; color:oklch(0.98 0.008 85);
+    background:oklch(0.58 0.115 42); border:none; border-radius:999px; padding:10px 20px; cursor:pointer; }
+  .btn-primary:hover { background:oklch(0.52 0.115 42); }
+  .btn-ghost { font:600 13px 'Work Sans',sans-serif; color:oklch(0.42 0.1 42);
+    background:oklch(0.94 0.03 48); border:none; border-radius:999px; padding:9px 18px; cursor:pointer; }
+  .btn-ghost:hover { background:oklch(0.92 0.035 48); }
+  .btn-outline { font:600 13px 'Work Sans',sans-serif; color:oklch(0.38 0.02 60);
+    background:transparent; border:1px solid oklch(0.85 0.02 75); border-radius:999px; padding:9px 17px; cursor:pointer; }
+  .btn-outline:hover { background:oklch(0.94 0.015 82); }
+  .card { background:oklch(0.995 0.005 88); border:1px solid oklch(0.91 0.015 80);
+    border-radius:16px; box-shadow:0 1px 2px oklch(0.4 0.03 60 / 0.05), 0 8px 24px oklch(0.4 0.03 60 / 0.05); }
+  .label { font:600 11px 'Work Sans',sans-serif; letter-spacing:0.1em; color:oklch(0.55 0.03 55); }
+  input:focus, textarea:focus { border-color:oklch(0.58 0.115 42 / 0.55) !important; }
+  .hidden { display:none !important; }
+
+  /* toast */
+  #toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:oklch(0.3 0.02 60); color:oklch(0.98 0.008 85); font:500 13.5px 'Work Sans',sans-serif;
+    padding:12px 20px; border-radius:999px; opacity:0; pointer-events:none;
+    transition:opacity .2s, transform .2s; z-index:100; box-shadow:0 8px 24px oklch(0.4 0.03 60 / 0.25); }
+  #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div style="display:flex; height:100vh; min-width:1120px; overflow:hidden; background:oklch(0.966 0.013 83); color:oklch(0.3 0.02 60); font-family:'Work Sans',sans-serif;">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside style="width:212px; flex:none; padding:22px 14px 18px; display:flex; flex-direction:column; gap:2px; border-right:1px solid oklch(0.9 0.015 80);">
+    <div style="display:flex; align-items:center; gap:10px; padding:0 10px 22px;">
+      <div style="width:36px; height:36px; flex:none; border-radius:50%; background:oklch(0.58 0.115 42); display:flex; align-items:center; justify-content:center;">
+        <svg width="24" height="24" viewBox="0 0 40 40" fill="none" stroke="oklch(0.98 0.008 85)" stroke-width="0.9" style="opacity:0.95;">
+          <circle cx="20" cy="20" r="6"></circle><circle cx="26" cy="20" r="6"></circle><circle cx="14" cy="20" r="6"></circle>
+          <circle cx="23" cy="14.804" r="6"></circle><circle cx="17" cy="14.804" r="6"></circle><circle cx="23" cy="25.196" r="6"></circle>
+          <circle cx="17" cy="25.196" r="6"></circle><circle cx="20" cy="9.608" r="6"></circle><circle cx="14" cy="9.608" r="6"></circle>
+          <circle cx="26" cy="9.608" r="6"></circle><circle cx="20" cy="30.392" r="6"></circle><circle cx="14" cy="30.392" r="6"></circle>
+          <circle cx="26" cy="30.392" r="6"></circle><circle cx="11" cy="14.804" r="6"></circle><circle cx="29" cy="14.804" r="6"></circle>
+          <circle cx="11" cy="25.196" r="6"></circle><circle cx="29" cy="25.196" r="6"></circle><circle cx="8" cy="20" r="6"></circle><circle cx="32" cy="20" r="6"></circle>
+        </svg>
+      </div>
+      <div>
+        <div style="font:500 15px/1.15 'Newsreader',serif;">Phoenix Tanner</div>
+        <div style="font:600 9.5px 'Work Sans',sans-serif; letter-spacing:0.1em; color:oklch(0.55 0.03 55); margin-top:2px;">CSTL · CRANIOSACRAL</div>
+      </div>
+    </div>
+
+    <div class="nav-item" data-tab="today"><span>Today</span></div>
+    <div class="nav-item" data-tab="clients"><span>Clients</span></div>
+    <div class="nav-item" data-tab="enquiries"><span>Enquiries</span><span id="nav-enq-badge" style="font:600 11px 'Work Sans',sans-serif; background:oklch(0.58 0.115 42); color:oklch(0.98 0.008 85); border-radius:999px; padding:1px 7px;" class="hidden">0</span></div>
+    <div class="nav-item" data-tab="calendar"><span>Calendar</span></div>
+    <div class="nav-item" data-tab="import"><span>Import</span></div>
+
+    <div style="margin-top:auto; display:flex; flex-direction:column; gap:10px;">
+      <div class="nav-item" data-tab="settings"><span>Settings</span></div>
+      <div style="padding:11px 12px 2px; border-top:1px solid oklch(0.9 0.015 80); display:flex; align-items:flex-start; gap:8px;">
+        <span id="gcal-dot" style="width:7px; height:7px; flex:none; border-radius:50%; background:oklch(0.62 0.13 148); margin-top:4px;"></span>
+        <div style="font-size:11px; line-height:1.45; color:oklch(0.55 0.03 55);"><span id="gcal-status">Google Calendar</span><br><a href="/admin/logout" style="color:oklch(0.55 0.03 55); text-decoration:underline;">Sign out</a></div>
+      </div>
+    </div>
+  </aside>
+
+  <main style="flex:1; min-width:0; overflow-y:auto;">
+
+    <!-- ============ TODAY ============ -->
+    <div class="screen" id="screen-today" style="padding:26px 30px 40px; display:flex; flex-direction:column; gap:20px; max-width:1080px;">
+      <header style="display:flex; align-items:flex-end; justify-content:space-between; gap:16px;">
+        <div>
+          <h1 style="margin:0; font:400 30px/1.1 'Newsreader',serif;" id="today-greeting">Good morning, Phoenix</h1>
+          <div style="margin-top:5px; font-size:13.5px; color:oklch(0.55 0.03 55);" id="today-sub">—</div>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button class="btn-primary" onclick="Nav.go('enquiries')">New enquiry</button>
+        </div>
+      </header>
+      <div style="display:flex; gap:20px; align-items:flex-start;">
+        <section style="flex:1; min-width:0; display:flex; flex-direction:column; gap:10px;">
+          <div class="label" style="padding:0 2px;">CLIENTS TODAY</div>
+          <div id="today-rows" style="display:flex; flex-direction:column; gap:10px;"></div>
+          <div id="today-empty" class="hidden" style="padding:22px; text-align:center; font-size:13px; color:oklch(0.55 0.03 55); background:oklch(0.975 0.01 84); border-radius:16px; border:1px dashed oklch(0.87 0.02 78);">No sessions in the calendar for today.</div>
+        </section>
+        <aside style="width:290px; flex:none; display:flex; flex-direction:column; gap:10px;">
+          <div class="label" style="padding:0 2px;">NEEDS ATTENTION</div>
+          <div class="card" style="padding:6px 16px;"><div id="today-attn"></div></div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- ============ CLIENTS ============ -->
+    <div class="screen hidden" id="screen-clients" style="padding:26px 30px 40px; max-width:1080px;">
+
+      <!-- list -->
+      <div id="clients-list" style="display:flex; flex-direction:column; gap:16px;">
+        <header style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+          <h1 style="margin:0; font:400 28px/1.1 'Newsreader',serif;">Clients</h1>
+          <button class="btn-ghost" onclick="Clients.newClient()">+ Add client</button>
+        </header>
+        <input id="clients-search" oninput="Clients.onSearch(this.value)" placeholder="Search name or email…" style="width:100%; box-sizing:border-box; font:400 14.5px 'Work Sans',sans-serif; color:oklch(0.3 0.02 60); background:oklch(0.995 0.005 88); border:1px solid oklch(0.89 0.015 80); border-radius:999px; padding:13px 20px; outline:none;">
+        <div class="card" style="padding:2px 20px;">
+          <div id="clients-rows"></div>
+          <div id="clients-noresults" class="hidden" style="padding:26px 0; font-size:13.5px; color:oklch(0.55 0.03 55); text-align:center;"></div>
+        </div>
+      </div>
+
+      <!-- profile -->
+      <div id="clients-profile" class="hidden" style="display:flex; flex-direction:column; gap:16px;">
+        <div onclick="Clients.backToList()" style="font:600 12.5px 'Work Sans',sans-serif; color:oklch(0.55 0.03 55); cursor:pointer; width:fit-content;">‹ All clients</div>
+
+        <div class="card" style="display:flex; align-items:center; gap:18px; padding:20px 22px;">
+          <div id="p-initials" style="width:56px; height:56px; flex:none; border-radius:50%; background:oklch(0.58 0.115 42); color:oklch(0.98 0.008 85); display:flex; align-items:center; justify-content:center; font:500 22px 'Newsreader',serif;"></div>
+          <div style="flex:1; min-width:0;">
+            <div id="p-name" style="font:500 24px 'Newsreader',serif;"></div>
+            <div id="p-contact" style="font-size:13px; color:oklch(0.55 0.03 55); margin-top:3px;"></div>
+            <div id="p-chips" style="display:flex; gap:7px; margin-top:9px; flex-wrap:wrap;"></div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px; align-items:stretch;">
+            <button class="btn-primary" style="padding:9px 18px;" onclick="Clients.bookNext()">Book next session</button>
+            <button class="btn-ghost" onclick="Clients.openDoc()">Open Google Doc</button>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:20px; align-items:flex-start;">
+          <section style="flex:1; min-width:0; display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:0 2px;">
+              <div class="label">SESSION NOTES</div>
+              <button class="btn-ghost" style="padding:6px 14px; font-size:12px;" onclick="Clients.toggleNote()"><span id="note-btn-label">+ Add note</span></button>
+            </div>
+
+            <div id="note-editor" class="hidden card" style="border:1.5px solid oklch(0.58 0.115 42 / 0.35); padding:16px 18px; display:flex; flex-direction:column; gap:12px;">
+              <textarea id="note-text" placeholder="Type the session note here…" style="width:100%; box-sizing:border-box; min-height:130px; resize:vertical; font:400 14px/1.6 'Work Sans',sans-serif; color:oklch(0.3 0.02 60); background:oklch(0.975 0.01 84); border:1px solid oklch(0.91 0.015 80); border-radius:12px; padding:12px 14px; outline:none;"></textarea>
+              <div id="note-bullets-wrap" class="hidden" style="background:oklch(0.94 0.03 148 / 0.45); border:1px solid oklch(0.85 0.05 148 / 0.5); border-radius:12px; padding:12px 16px;">
+                <div style="font:600 10.5px 'Work Sans',sans-serif; letter-spacing:0.1em; color:oklch(0.42 0.08 148); margin-bottom:7px;">SUMMARY — GOES TO THE DOC</div>
+                <div id="note-bullets"></div>
+              </div>
+              <div style="display:flex; gap:9px; align-items:center;">
+                <button class="btn-outline" onclick="Clients.summarise()"><span id="summarise-label">Summarise</span></button>
+                <div style="flex:1;"></div>
+                <button class="btn-primary" style="padding:9px 20px;" onclick="Clients.saveNote()">Save note</button>
+              </div>
+            </div>
+
+            <div id="p-sessions"></div>
+            <div id="p-nosessions" class="hidden" style="padding:22px; text-align:center; font-size:13px; color:oklch(0.55 0.03 55); background:oklch(0.975 0.01 84); border-radius:16px; border:1px dashed oklch(0.87 0.02 78);">No sessions yet.</div>
+          </section>
+
+          <aside style="width:300px; flex:none; display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:0 2px;">
+              <div class="label">FROM THE INTAKE FORM</div>
+              <div onclick="Clients.toggleDetailsEdit()" style="font:600 11.5px 'Work Sans',sans-serif; color:oklch(0.42 0.1 42); cursor:pointer;"><span id="details-edit-label">Edit</span></div>
+            </div>
+            <div id="details-view" class="card" style="padding:6px 16px;"></div>
+            <div id="details-edit" class="hidden card" style="border:1.5px solid oklch(0.58 0.115 42 / 0.35); padding:14px 16px; display:flex; flex-direction:column; gap:11px;"></div>
+          </aside>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ ENQUIRIES ============ -->
+    <div class="screen hidden" id="screen-enquiries" style="padding:26px 30px 40px; max-width:1080px;">
+
+      <!-- step 0: inbox -->
+      <div id="enq-step0" style="display:flex; flex-direction:column; gap:16px;">
+        <header>
+          <h1 style="margin:0; font:400 28px/1.1 'Newsreader',serif;">Enquiries</h1>
+          <div style="margin-top:5px; font-size:13.5px; color:oklch(0.55 0.03 55);">Paste a message — details get picked out for you, nothing is sent without your say-so.</div>
+        </header>
+        <div style="display:flex; gap:20px; align-items:flex-start;">
+          <section style="width:330px; flex:none; display:flex; flex-direction:column; gap:10px;">
+            <div class="label" style="padding:0 2px;">WAITING</div>
+            <div id="enq-inbox"></div>
+            <div id="enq-inbox-empty" class="hidden" style="padding:20px; text-align:center; font-size:13px; color:oklch(0.55 0.03 55); background:oklch(0.975 0.01 84); border-radius:16px; border:1px dashed oklch(0.87 0.02 78);">Inbox clear ✓</div>
+          </section>
+          <section style="flex:1; min-width:0; display:flex; flex-direction:column; gap:10px;">
+            <div class="label" style="padding:0 2px;">NEW ENQUIRY</div>
+            <div class="card" style="padding:16px 18px; display:flex; flex-direction:column; gap:12px;">
+              <textarea id="enq-text" placeholder="Paste the WhatsApp or email message here…" style="width:100%; box-sizing:border-box; min-height:170px; resize:vertical; font:400 14px/1.6 'Work Sans',sans-serif; color:oklch(0.3 0.02 60); background:oklch(0.975 0.01 84); border:1px solid oklch(0.91 0.015 80); border-radius:12px; padding:12px 14px; outline:none;"></textarea>
+              <div style="display:flex; gap:9px;">
+                <button class="btn-outline" onclick="Enq.useSample()">Use a sample message</button>
+                <div style="flex:1;"></div>
+                <button class="btn-primary" onclick="Enq.analyse()"><span id="enq-analyse-label">Read message →</span></button>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- step 1: booking -->
+      <div id="enq-step1" class="hidden" style="display:flex; flex-direction:column; gap:16px;">
+        <div onclick="Enq.backToInbox()" style="font:600 12.5px 'Work Sans',sans-serif; color:oklch(0.55 0.03 55); cursor:pointer; width:fit-content;">‹ Enquiries</div>
+        <div class="card" style="display:flex; align-items:center; gap:16px; padding:16px 20px;">
+          <div style="flex:1; min-width:0;">
+            <div style="display:flex; align-items:baseline; gap:10px;">
+              <input id="bk-name" style="font:500 21px 'Newsreader',serif; color:oklch(0.3 0.02 60); background:transparent; border:none; border-bottom:1.5px dashed oklch(0.85 0.02 75); outline:none; padding:0 1px 2px; min-width:170px;">
+              <span id="bk-badge" style="font:600 10.5px 'Work Sans',sans-serif; letter-spacing:0.06em;"></span>
+            </div>
+            <div id="bk-sub" style="font-size:12.5px; color:oklch(0.55 0.03 55); margin-top:5px;"></div>
+          </div>
+          <div style="display:flex; background:oklch(0.955 0.012 82); border:1px solid oklch(0.9 0.015 80); border-radius:999px; padding:3px; flex:none;">
+            <div id="seg-waterloo" onclick="Enq.pickClinic('waterloo')" style="font:600 12.5px 'Work Sans',sans-serif; padding:8px 16px; border-radius:999px; cursor:pointer; user-select:none;">Waterloo · £80</div>
+            <div id="seg-bethnal" onclick="Enq.pickClinic('bethnal_green')" style="font:600 12.5px 'Work Sans',sans-serif; padding:8px 16px; border-radius:999px; cursor:pointer; user-select:none;">Bethnal Green · £30–60</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:20px; align-items:flex-start;">
+          <section style="flex:1; min-width:0; display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; align-items:center; gap:14px; padding:0 2px;">
+              <div class="label" style="white-space:nowrap;">NEXT 7 DAYS · <span id="grid-clinic-label">WATERLOO</span></div>
+              <div style="flex:1;"></div>
+              <div style="display:flex; align-items:center; gap:5px; font-size:11px; color:oklch(0.55 0.03 55);"><span style="width:9px; height:9px; border-radius:3px; background:oklch(0.93 0.035 148);"></span>free</div>
+              <div style="display:flex; align-items:center; gap:5px; font-size:11px; color:oklch(0.55 0.03 55);"><span style="width:9px; height:9px; border-radius:3px; background:oklch(0.93 0.012 80);"></span>busy</div>
+              <div style="display:flex; align-items:center; gap:5px; font-size:11px; color:oklch(0.55 0.03 55);"><span style="width:9px; height:9px; border-radius:3px; background:oklch(0.58 0.115 42);"></span>chosen</div>
+            </div>
+            <div class="card" style="padding:16px;"><div id="bk-grid" style="display:flex; gap:6px;"></div></div>
+          </section>
+          <aside style="width:330px; flex:none; display:flex; flex-direction:column; gap:10px;">
+            <div class="label" style="padding:0 2px;">BOOKING</div>
+            <div id="bk-noslot" style="padding:26px 20px; text-align:center; font-size:13px; color:oklch(0.55 0.03 55); background:oklch(0.975 0.01 84); border-radius:16px; border:1px dashed oklch(0.87 0.02 78);">Pick a free slot — you'll see exactly what gets created before anything happens.</div>
+            <div id="bk-panel" class="hidden card" style="padding:16px 18px; display:flex; flex-direction:column; gap:13px;">
+              <div>
+                <div id="bk-slot-title" style="font:500 18px 'Newsreader',serif;"></div>
+                <div id="bk-slot-sub" style="font-size:12.5px; color:oklch(0.55 0.03 55); margin-top:2px;"></div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:7px;">
+                <div style="font:600 10.5px 'Work Sans',sans-serif; letter-spacing:0.1em; color:oklch(0.58 0.03 55);">CALENDAR EVENTS TO CREATE</div>
+                <div id="bk-events"></div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:7px;">
+                <div style="font:600 10.5px 'Work Sans',sans-serif; letter-spacing:0.1em; color:oklch(0.58 0.03 55);">CONFIRMATION EMAIL <span id="bk-email-hint" style="font-weight:400; letter-spacing:0; color:oklch(0.55 0.03 55);"></span></div>
+                <textarea id="bk-email" style="width:100%; box-sizing:border-box; min-height:150px; resize:vertical; white-space:pre-wrap; font:400 12px/1.6 'Work Sans',sans-serif; color:oklch(0.4 0.06 48); background:oklch(0.94 0.03 48 / 0.4); border:1px solid oklch(0.87 0.05 48 / 0.5); border-radius:10px; padding:10px 12px; outline:none;"></textarea>
+              </div>
+              <label style="display:flex; align-items:center; gap:9px; font-size:13px; cursor:pointer;">
+                <input type="email" id="bk-clientemail" placeholder="Client email (for the calendar invite)" style="width:100%; box-sizing:border-box; font:400 12.5px 'Work Sans',sans-serif; color:oklch(0.3 0.02 60); background:oklch(0.975 0.01 84); border:1px solid oklch(0.91 0.015 80); border-radius:8px; padding:8px 10px; outline:none;">
+              </label>
+              <div style="display:flex; gap:9px;">
+                <button class="btn-primary" style="flex:1; padding:12px 16px; font-size:14px;" onclick="Enq.confirmBooking()"><span id="bk-confirm-label">Create events &amp; send email</span></button>
+                <button class="btn-outline" onclick="Enq.copyEmail()">Copy text</button>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+
+      <!-- step 2: confirmed -->
+      <div id="enq-step2" class="hidden" style="display:flex; justify-content:center; padding-top:40px;">
+        <div class="card" style="width:520px; border-radius:20px; padding:32px 34px; text-align:center;">
+          <div style="width:52px; height:52px; margin:0 auto; border-radius:50%; background:oklch(0.94 0.03 148); color:oklch(0.42 0.08 148); display:flex; align-items:center; justify-content:center; font-size:24px;">✓</div>
+          <div id="done-title" style="font:500 24px 'Newsreader',serif; margin-top:14px;"></div>
+          <div id="done-when" style="font-size:13.5px; color:oklch(0.55 0.03 55); margin-top:4px;"></div>
+          <div id="done-items" style="margin:20px 0 4px; text-align:left; display:flex; flex-direction:column; gap:8px;"></div>
+          <div style="display:flex; gap:10px; justify-content:center; margin-top:22px;">
+            <button class="btn-primary" style="padding:10px 20px;" onclick="Enq.goBookedClient()">Go to client</button>
+            <button class="btn-outline" onclick="Nav.go('today')">Back to Today</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ CALENDAR ============ -->
+    <div class="screen hidden" id="screen-calendar" style="padding:26px 30px 40px; max-width:1200px; display:flex; flex-direction:column; gap:16px;">
+      <header style="display:flex; align-items:flex-end; justify-content:space-between; gap:16px;">
+        <div>
+          <h1 style="margin:0; font:400 28px/1.1 'Newsreader',serif;">This week</h1>
+          <div id="cal-sub" style="margin-top:5px; font-size:13.5px; color:oklch(0.55 0.03 55);">Mirrors your Google Calendars</div>
+        </div>
+        <div style="display:flex; gap:14px;">
+          <div style="display:flex; align-items:center; gap:6px; font-size:11.5px; color:oklch(0.55 0.03 55);"><span style="width:8px; height:8px; border-radius:50%; background:oklch(0.58 0.115 42);"></span>Personal</div>
+          <div style="display:flex; align-items:center; gap:6px; font-size:11.5px; color:oklch(0.55 0.03 55);"><span style="width:8px; height:8px; border-radius:50%; background:oklch(0.62 0.13 148);"></span>Room / studio</div>
+        </div>
+      </header>
+      <div id="cal-week" style="display:flex; gap:9px; align-items:stretch;"></div>
+    </div>
+
+    <!-- ============ IMPORT ============ -->
+    <div class="screen hidden" id="screen-import" style="padding:26px 30px 40px; max-width:900px; display:flex; flex-direction:column; gap:16px;">
+      <header>
+        <h1 style="margin:0; font:400 28px/1.1 'Newsreader',serif;">Import existing clients</h1>
+        <div style="margin-top:5px; font-size:13.5px; color:oklch(0.55 0.03 55);">Paste a CSV of your existing clients to bring them in — one record each.</div>
+      </header>
+      <div style="border:1.5px dashed oklch(0.83 0.03 60); border-radius:20px; background:oklch(0.98 0.008 85); padding:22px; display:flex; flex-direction:column; gap:12px;">
+        <div style="font-size:12.5px; color:oklch(0.55 0.03 55);">Columns: <b>name</b>, email, phone, clinic (waterloo or bethnal green). First row must be the header.</div>
+        <textarea id="import-csv" placeholder="name,email,phone,clinic&#10;Jane Doe,jane@example.com,07700 900000,waterloo" style="width:100%; box-sizing:border-box; min-height:170px; resize:vertical; font:400 13px/1.6 ui-monospace,Menlo,monospace; color:oklch(0.3 0.02 60); background:oklch(0.975 0.01 84); border:1px solid oklch(0.91 0.015 80); border-radius:12px; padding:12px 14px; outline:none;"></textarea>
+        <div style="display:flex; gap:9px; align-items:center;">
+          <button class="btn-outline" onclick="Importer.sample()">Use a sample</button>
+          <div style="flex:1;"></div>
+          <button class="btn-primary" onclick="Importer.run()">Import clients</button>
+        </div>
+      </div>
+      <div id="import-result" class="hidden card" style="padding:16px 18px;"></div>
+    </div>
+
+    <!-- ============ SETTINGS ============ -->
+    <div class="screen hidden" id="screen-settings" style="padding:26px 30px 40px; max-width:760px; display:flex; flex-direction:column; gap:16px;">
+      <h1 style="margin:0; font:400 28px/1.1 'Newsreader',serif;">Settings</h1>
+
+      <div class="label" style="padding:0 2px;">CLINICS &amp; BOOKING RULES</div>
+      <div class="card" style="padding:6px 20px;">
+        <div style="padding:15px 0; border-bottom:1px solid oklch(0.93 0.012 80);">
+          <div style="display:flex; align-items:baseline; gap:10px;"><span style="font:500 16px 'Newsreader',serif;">Waterloo</span><span style="font:600 12px 'Work Sans',sans-serif; color:oklch(0.42 0.1 42);">£80 · 60 min</span></div>
+          <div style="font-size:12.5px; line-height:1.6; color:oklch(0.5 0.02 58); margin-top:4px;">A pending 1-hour session is added to your calendar; a Travel &amp; Setup block is created before the first session of the day.</div>
+        </div>
+        <div style="padding:15px 0;">
+          <div style="display:flex; align-items:baseline; gap:10px;"><span style="font:500 16px 'Newsreader',serif;">Bethnal Green</span><span style="font:600 12px 'Work Sans',sans-serif; color:oklch(0.42 0.08 148);">£30–60 sliding · 60 min</span></div>
+          <div style="font-size:12.5px; line-height:1.6; color:oklch(0.5 0.02 58); margin-top:4px;">Same booking, with a 15-minute gap kept between sessions at this location.</div>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 2px 0;">
+        <div class="label">ACCESS NOTE — SENT WITH EVERY BOOKING</div>
+        <div onclick="Settings.toggleAccess()" style="font:600 11.5px 'Work Sans',sans-serif; color:oklch(0.42 0.1 42); cursor:pointer;"><span id="access-edit-label">Edit</span></div>
+      </div>
+      <div id="access-view" style="background:oklch(0.94 0.03 48 / 0.5); border:1px solid oklch(0.87 0.05 48 / 0.5); border-radius:16px; padding:14px 18px; font-size:13px; line-height:1.6; color:oklch(0.4 0.06 48);"></div>
+      <div id="access-edit" class="hidden card" style="border:1.5px solid oklch(0.58 0.115 42 / 0.35); padding:14px 16px; display:flex; flex-direction:column; gap:10px;">
+        <textarea id="access-text" style="width:100%; box-sizing:border-box; min-height:100px; resize:vertical; font:400 13px/1.6 'Work Sans',sans-serif; color:oklch(0.3 0.02 60); background:oklch(0.975 0.01 84); border:1px solid oklch(0.91 0.015 80); border-radius:10px; padding:10px 12px; outline:none;"></textarea>
+        <button class="btn-primary" style="align-self:flex-start; padding:9px 18px;" onclick="Settings.saveAccess()">Save</button>
+      </div>
+
+      <div class="label" style="padding:8px 2px 0;">NEW CLIENT EMAIL — BY LOCATION</div>
+      <div class="card" style="padding:16px 18px; display:flex; flex-direction:column; gap:12px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+          <div style="display:flex; background:oklch(0.955 0.012 82); border:1px solid oklch(0.9 0.015 80); border-radius:999px; padding:3px;">
+            <div id="tmpl-seg-waterloo" onclick="Settings.pickTemplate('waterloo')" style="font:600 12.5px 'Work Sans',sans-serif; padding:7px 14px; border-radius:999px; cursor:pointer; user-select:none;">Waterloo</div>
+            <div id="tmpl-seg-bethnal" onclick="Settings.pickTemplate('bethnal_green')" style="font:600 12.5px 'Work Sans',sans-serif; padding:7px 14px; border-radius:999px; cursor:pointer; user-select:none;">Bethnal Green</div>
+          </div>
+          <div onclick="Settings.toggleTemplate()" style="font:600 11.5px 'Work Sans',sans-serif; color:oklch(0.42 0.1 42); cursor:pointer;"><span id="tmpl-edit-label">Edit</span></div>
+        </div>
+        <div id="tmpl-view" style="white-space:pre-wrap; font-size:13px; line-height:1.6; color:oklch(0.35 0.02 60); background:oklch(0.975 0.01 84); border-radius:10px; padding:12px 14px;"></div>
+        <div id="tmpl-edit" class="hidden" style="display:flex; flex-direction:column; gap:10px;">
+          <textarea id="tmpl-text" style="width:100%; box-sizing:border-box; min-height:170px; resize:vertical; font:400 13px/1.6 'Work Sans',sans-serif; color:oklch(0.3 0.02 60); background:oklch(0.975 0.01 84); border:1px solid oklch(0.91 0.015 80); border-radius:10px; padding:12px 14px; outline:none;"></textarea>
+          <button class="btn-primary" style="align-self:flex-start; padding:9px 18px;" onclick="Settings.saveTemplate()">Save</button>
+        </div>
+        <div style="font-size:11.5px; color:oklch(0.55 0.03 55);">Use {name} for their name and {accessNote} for the access note above.</div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// -------------------------------------------------------------------------
+// Small helpers
+// -------------------------------------------------------------------------
+const $ = (sel, root=document) => root.querySelector(sel);
+const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => (
+  {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+async function api(path, opts={}) {
+  const res = await fetch(path, {
+    headers: {'Content-Type': 'application/json'},
+    credentials: 'same-origin', ...opts,
+  });
+  if (res.status === 401) { window.location = '/admin/login'; throw new Error('unauthorized'); }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+  return data;
+}
+function initials(name) {
+  return (name || '?').split(/\s+/).filter(Boolean).slice(0,2).map(w => w[0].toUpperCase()).join('');
+}
+const CLINIC_LABEL = { waterloo: 'Waterloo', bethnal_green: 'Bethnal Green' };
+function clinicChip(clinic) {
+  const label = CLINIC_LABEL[clinic] || 'Waterloo';
+  if (clinic === 'bethnal_green')
+    return {label, color:'oklch(0.42 0.08 148)', bg:'oklch(0.93 0.04 148)'};
+  return {label, color:'oklch(0.42 0.1 42)', bg:'oklch(0.94 0.03 48)'};
+}
+
+// -------------------------------------------------------------------------
+// Navigation
+// -------------------------------------------------------------------------
+const Nav = {
+  current: 'today',
+  go(tab) {
+    this.current = tab;
+    $$('.screen').forEach(s => s.classList.add('hidden'));
+    $('#screen-' + tab).classList.remove('hidden');
+    $$('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.tab === tab));
+    if (tab === 'today') Today.load();
+    if (tab === 'clients') Clients.loadList();
+    if (tab === 'enquiries') Enq.loadInbox();
+    if (tab === 'calendar') Calendar.load();
+    if (tab === 'settings') Settings.load();
+    document.querySelector('main').scrollTop = 0;
+  }
+};
+$$('.nav-item').forEach(n => n.addEventListener('click', () => Nav.go(n.dataset.tab)));
+
+async function updateEnqBadge() {
+  try {
+    const d = await api('/admin/api/enquiries');
+    const n = d.new_count || 0;
+    const b = $('#nav-enq-badge');
+    if (n > 0) { b.textContent = n; b.classList.remove('hidden'); }
+    else b.classList.add('hidden');
+  } catch (e) { /* ignore */ }
+}
+
+// -------------------------------------------------------------------------
+// Today
+// -------------------------------------------------------------------------
+const Today = {
+  async load() {
+    try {
+      const d = await api('/admin/api/today');
+      $('#today-greeting').textContent = d.greeting;
+      $('#today-sub').textContent = d.date_display;
+      const rows = d.rows || [];
+      if (!rows.length) {
+        $('#today-rows').innerHTML = '';
+        $('#today-empty').classList.remove('hidden');
+        $('#today-empty').textContent = d.calendar_ok
+          ? 'No sessions in the calendar for today.'
+          : 'Calendar not connected yet — this fills in once the server has Google credentials.';
+      } else {
+        $('#today-empty').classList.add('hidden');
+        $('#today-rows').innerHTML = rows.map(r => {
+          const chip = clinicChip(r.clinic);
+          const isNew = r.isNew ? `<span style="font:600 10.5px 'Work Sans',sans-serif; letter-spacing:0.06em; color:oklch(0.58 0.115 42);">NEW CLIENT</span>` : '';
+          const goBtn = r.client_id
+            ? `<button onclick="Clients.gotoFromToday(${r.client_id})" style="flex:none; font:600 13px 'Work Sans',sans-serif; color:oklch(0.42 0.1 42); background:transparent; border:1.5px solid oklch(0.58 0.115 42 / 0.45); border-radius:999px; padding:9px 16px; cursor:pointer;">Go to client</button>`
+            : '';
+          return `<div class="card" style="display:flex; align-items:center; gap:18px; padding:16px 18px;">
+            <div style="width:62px; flex:none; text-align:center;">
+              <div style="font:600 20px 'Work Sans',sans-serif; font-variant-numeric:tabular-nums;">${esc(r.time)}</div>
+              <div style="font-size:11px; color:oklch(0.55 0.03 55); margin-top:1px;">60 min</div>
+            </div>
+            <div style="width:1px; align-self:stretch; background:oklch(0.91 0.015 80);"></div>
+            <div style="flex:1; min-width:0;">
+              <div style="display:flex; align-items:baseline; gap:9px;"><span style="font:500 18px 'Newsreader',serif;">${esc(r.name)}</span>${isNew}</div>
+              <div style="display:flex; gap:7px; margin-top:7px;"><span style="font:500 11.5px 'Work Sans',sans-serif; border-radius:999px; padding:3px 10px; color:${chip.color}; background:${chip.bg};">${esc(chip.label)}</span></div>
+            </div>
+            ${goBtn}
+          </div>`;
+        }).join('');
+      }
+      const attn = d.attention || [];
+      $('#today-attn').innerHTML = attn.length ? attn.map((a, i) =>
+        `<div style="display:flex; align-items:center; gap:12px; padding:13px 0; border-bottom:${i<attn.length-1?'1px solid oklch(0.93 0.012 80)':'none'};">
+          <div style="flex:1; min-width:0;"><div style="font:600 13.5px 'Work Sans',sans-serif;">${esc(a.name)}</div><div style="font-size:12px; color:oklch(0.55 0.03 55); margin-top:2px;">${esc(a.desc)}</div></div>
+          <button class="btn-ghost" style="padding:6px 13px; font-size:12px;" onclick="Nav.go('${a.tab}')">Open</button>
+        </div>`).join('')
+        : `<div style="padding:16px 0; font-size:13px; color:oklch(0.55 0.03 55);">Nothing needs attention — lovely.</div>`;
+      updateEnqBadge();
+    } catch (e) { /* graceful */ }
+  }
+};
+
+// -------------------------------------------------------------------------
+// Clients
+// -------------------------------------------------------------------------
+const Clients = {
+  all: [], search: '', current: null, noteOpen: false, detailsEdit: false,
+
+  async loadList() {
+    try {
+      const data = await api('/admin/api/clients');
+      this.all = data.clients || [];
+      this.renderList();
+    } catch (e) { toast('Could not load clients'); }
+    $('#clients-list').classList.remove('hidden');
+    $('#clients-profile').classList.add('hidden');
+  },
+  onSearch(v) { this.search = v.trim().toLowerCase(); this.renderList(); },
+  filtered() {
+    if (!this.search) return this.all;
+    return this.all.filter(c =>
+      (c.name||'').toLowerCase().includes(this.search) ||
+      (c.email||'').toLowerCase().includes(this.search));
+  },
+  renderList() {
+    const rows = this.filtered();
+    const wrap = $('#clients-rows');
+    const nores = $('#clients-noresults');
+    if (!rows.length) {
+      wrap.innerHTML = '';
+      nores.classList.remove('hidden');
+      nores.textContent = this.all.length ? `No clients match "${this.search}"` : 'No clients yet — add your first one.';
+      return;
+    }
+    nores.classList.add('hidden');
+    wrap.innerHTML = rows.map((c, i) => {
+      const chip = clinicChip(c.clinic);
+      const border = i < rows.length-1 ? '1px solid oklch(0.93 0.012 80)' : 'none';
+      const mkt = c.marketing_consent ? 'Marketing ✓' : 'No marketing';
+      const mktColor = c.marketing_consent ? 'oklch(0.45 0.08 148)' : 'oklch(0.6 0.02 60)';
+      return `<div onclick="Clients.open(${c.id})" style="display:flex; align-items:center; gap:14px; padding:14px 0; border-bottom:${border}; cursor:pointer;">
+        <div style="width:38px; height:38px; flex:none; border-radius:50%; background:oklch(0.93 0.02 60); color:oklch(0.45 0.04 55); display:flex; align-items:center; justify-content:center; font:500 14px 'Newsreader',serif;">${esc(initials(c.name))}</div>
+        <div style="width:200px; flex:none; min-width:0;">
+          <div style="font:500 15.5px 'Newsreader',serif;">${esc(c.name)}</div>
+          <div style="font-size:11.5px; color:oklch(0.55 0.03 55); margin-top:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(c.email) || '—'}</div>
+        </div>
+        <span style="flex:none; font:500 11.5px 'Work Sans',sans-serif; border-radius:999px; padding:3px 10px; color:${chip.color}; background:${chip.bg};">${esc(chip.label)}</span>
+        <div style="flex:1;"></div>
+        <div style="width:95px; flex:none; font-size:12px; color:${mktColor}; white-space:nowrap;">${esc(mkt)}</div>
+        <div style="color:oklch(0.62 0.03 55); font-size:15px;">›</div>
+      </div>`;
+    }).join('');
+  },
+
+  async open(id) {
+    try {
+      const data = await api('/admin/api/clients/' + id);
+      this.current = data.client;
+      this.noteOpen = false; this.detailsEdit = false;
+      this.renderProfile();
+      $('#clients-list').classList.add('hidden');
+      $('#clients-profile').classList.remove('hidden');
+      document.querySelector('main').scrollTop = 0;
+    } catch (e) { toast('Could not open client'); }
+  },
+  backToList() {
+    $('#clients-profile').classList.add('hidden');
+    $('#clients-list').classList.remove('hidden');
+  },
+  renderProfile() {
+    const c = this.current;
+    $('#p-initials').textContent = initials(c.name);
+    $('#p-name').textContent = c.name;
+    $('#p-contact').textContent = [c.email, c.phone].filter(Boolean).join('  ·  ') || 'No contact details yet';
+    const chips = [clinicChip(c.clinic)];
+    chips.push(c.intake_complete
+      ? {label:'Intake complete', color:'oklch(0.42 0.08 148)', bg:'oklch(0.93 0.04 148)'}
+      : {label:'Intake incomplete', color:'oklch(0.5 0.09 75)', bg:'oklch(0.95 0.035 85)'});
+    $('#p-chips').innerHTML = chips.map(ch =>
+      `<span style="font:500 11.5px 'Work Sans',sans-serif; border-radius:999px; padding:3px 10px; color:${ch.color}; background:${ch.bg};">${esc(ch.label)}</span>`).join('');
+
+    // sessions
+    const sess = c.sessions || [];
+    const sc = $('#p-sessions');
+    if (!sess.length) { sc.innerHTML=''; $('#p-nosessions').classList.remove('hidden'); }
+    else {
+      $('#p-nosessions').classList.add('hidden');
+      sc.innerHTML = sess.map((s, idx) => {
+        const chip = clinicChip(s.clinic);
+        const bullets = (s.bullets||[]).map(b =>
+          `<div style="display:flex; gap:8px; font-size:13.5px; line-height:1.55;"><span style="color:oklch(0.58 0.115 42);">•</span><span>${esc(b)}</span></div>`).join('')
+          || `<div style="font-size:13px; color:oklch(0.55 0.03 55);">${esc(s.raw_note) || 'No note saved.'}</div>`;
+        return `<div class="card" style="padding:15px 18px; margin-bottom:10px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="font:500 15px 'Newsreader',serif;">${esc(s.date)}</div>
+            <span style="font:500 11px 'Work Sans',sans-serif; border-radius:999px; padding:2px 9px; color:${chip.color}; background:${chip.bg};">${esc(chip.label)}</span>
+            <div style="flex:1;"></div>
+            ${s.raw_note ? `<div onclick="Clients.toggleRaw(${idx})" style="font:600 11.5px 'Work Sans',sans-serif; color:oklch(0.55 0.03 55); cursor:pointer;">Show raw note</div>` : ''}
+          </div>
+          <div style="margin-top:9px; display:flex; flex-direction:column; gap:4px;">${bullets}</div>
+          <div id="raw-${idx}" class="hidden" style="margin-top:10px; padding:11px 14px; background:oklch(0.975 0.01 84); border-radius:10px; font-size:12.5px; line-height:1.6; color:oklch(0.45 0.02 60);">${esc(s.raw_note)}</div>
+        </div>`;
+      }).join('');
+    }
+
+    // note editor reset
+    this.noteOpen = false;
+    $('#note-editor').classList.add('hidden');
+    $('#note-btn-label').textContent = '+ Add note';
+    $('#note-text').value = '';
+    $('#note-bullets-wrap').classList.add('hidden');
+
+    this.renderDetails();
+  },
+  toggleRaw(idx) {
+    const el = $('#raw-' + idx); if (el) el.classList.toggle('hidden');
+  },
+
+  DETAIL_FIELDS: [
+    ['dob','Date of birth'], ['occupation','Occupation'], ['doctor','GP / Doctor'],
+    ['meds','Medications'], ['conditions','Health conditions'],
+    ['emergency','Emergency contact'], ['referred','Referred by'], ['drive_url','Google Doc link'],
+  ],
+  renderDetails() {
+    const c = this.current;
+    if (this.detailsEdit) {
+      $('#details-view').classList.add('hidden');
+      $('#details-edit').classList.remove('hidden');
+      $('#details-edit-label').textContent = 'Cancel';
+      $('#details-edit').innerHTML = this.DETAIL_FIELDS.map(([k,lab]) =>
+        `<label style="display:flex; flex-direction:column; gap:4px;">
+          <span style="font:600 10px 'Work Sans',sans-serif; letter-spacing:0.08em; color:oklch(0.58 0.03 55);">${esc(lab)}</span>
+          <input id="edit-${k}" value="${esc(c[k])}" style="width:100%; box-sizing:border-box; font:400 13px 'Work Sans',sans-serif; color:oklch(0.3 0.02 60); background:oklch(0.975 0.01 84); border:1px solid oklch(0.91 0.015 80); border-radius:8px; padding:8px 10px; outline:none;">
+        </label>`).join('') +
+        `<label style="display:flex; align-items:center; gap:8px; font:500 12.5px 'Work Sans',sans-serif; color:oklch(0.42 0.02 60);">
+          <input type="checkbox" id="edit-intake" ${c.intake_complete?'checked':''}> Intake form complete
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; font:500 12.5px 'Work Sans',sans-serif; color:oklch(0.42 0.02 60);">
+          <input type="checkbox" id="edit-marketing" ${c.marketing_consent?'checked':''}> Marketing consent
+        </label>
+        <button class="btn-primary" style="padding:10px 18px;" onclick="Clients.saveDetails()">Save details</button>`;
+    } else {
+      $('#details-edit').classList.add('hidden');
+      $('#details-view').classList.remove('hidden');
+      $('#details-edit-label').textContent = 'Edit';
+      const rows = this.DETAIL_FIELDS.filter(([k]) => c[k]);
+      $('#details-view').innerHTML = rows.length ? rows.map(([k,lab], i) =>
+        `<div style="padding:11px 0; border-bottom:${i<rows.length-1?'1px solid oklch(0.93 0.012 80)':'none'};">
+          <div style="font:600 10.5px 'Work Sans',sans-serif; letter-spacing:0.08em; color:oklch(0.58 0.03 55);">${esc(lab)}</div>
+          <div style="font-size:13px; line-height:1.5; margin-top:3px;">${esc(c[k])}</div>
+        </div>`).join('')
+        : `<div style="padding:16px 0; font-size:12.5px; color:oklch(0.55 0.03 55);">No intake details yet — press Edit to add them.</div>`;
+    }
+  },
+  toggleDetailsEdit() { this.detailsEdit = !this.detailsEdit; this.renderDetails(); },
+  async saveDetails() {
+    const c = this.current;
+    const payload = {};
+    this.DETAIL_FIELDS.forEach(([k]) => { payload[k] = ($('#edit-'+k)||{}).value || ''; });
+    payload.intake_complete = $('#edit-intake').checked;
+    payload.marketing_consent = $('#edit-marketing').checked;
+    try {
+      const data = await api('/admin/api/clients/'+c.id, {method:'PUT', body: JSON.stringify(payload)});
+      this.current = data.client;
+      this.detailsEdit = false;
+      this.renderProfile();
+      toast('Details saved');
+    } catch (e) { toast('Could not save'); }
+  },
+
+  toggleNote() {
+    this.noteOpen = !this.noteOpen;
+    $('#note-editor').classList.toggle('hidden', !this.noteOpen);
+    $('#note-btn-label').textContent = this.noteOpen ? 'Close' : '+ Add note';
+  },
+  async summarise() {
+    const text = $('#note-text').value.trim();
+    if (!text) { toast('Write a note first'); return; }
+    $('#summarise-label').textContent = 'Summarising…';
+    try {
+      const data = await api('/admin/api/summarise', {method:'POST', body: JSON.stringify({text})});
+      const bullets = data.bullets || [];
+      $('#note-bullets').innerHTML = bullets.map(b =>
+        `<div style="display:flex; gap:8px; font-size:13px; line-height:1.55; color:oklch(0.35 0.03 60);"><span style="color:oklch(0.42 0.08 148);">•</span><span>${esc(b)}</span></div>`).join('');
+      $('#note-bullets-wrap').classList.remove('hidden');
+      this._lastBullets = bullets;
+    } catch (e) { toast('Summarise unavailable'); }
+    $('#summarise-label').textContent = 'Summarise';
+  },
+  async saveNote() {
+    const text = $('#note-text').value.trim();
+    if (!text) { toast('Write a note first'); return; }
+    try {
+      await api('/admin/api/clients/'+this.current.id+'/sessions', {method:'POST',
+        body: JSON.stringify({raw_note: text, bullets: this._lastBullets || [], clinic: this.current.clinic})});
+      this._lastBullets = null;
+      await this.open(this.current.id);
+      toast('Note saved');
+    } catch (e) { toast('Could not save note'); }
+  },
+
+  bookNext() { toast('Booking flow comes in the next stage'); },
+  openDoc() {
+    const url = this.current && this.current.drive_url;
+    if (url) window.open(url, '_blank');
+    else toast('No Google Doc link yet — add one under Edit');
+  },
+  async newClient() {
+    const name = prompt('New client name:');
+    if (!name || !name.trim()) return;
+    try {
+      const data = await api('/admin/api/clients', {method:'POST', body: JSON.stringify({name: name.trim()})});
+      await this.loadList();
+      this.open(data.client.id);
+      toast('Client added');
+    } catch (e) { toast('Could not add client'); }
+  },
+  async gotoFromToday(id) {
+    Nav.go('clients');
+    await this.loadList();
+    this.open(id);
+  },
+};
+
+// -------------------------------------------------------------------------
+// Calendar
+// -------------------------------------------------------------------------
+const Calendar = {
+  async load() {
+    const wk = $('#cal-week');
+    wk.innerHTML = `<div class="card" style="padding:26px; font-size:13.5px; color:oklch(0.55 0.03 55);">Loading…</div>`;
+    let d;
+    try { d = await api('/admin/api/calendar/week'); }
+    catch (e) { wk.innerHTML = `<div class="card" style="padding:26px; font-size:13.5px; color:oklch(0.55 0.03 55);">Could not load the calendar.</div>`; return; }
+    if (!d.calendar_ok) {
+      wk.innerHTML = `<div class="card" style="padding:26px; font-size:13.5px; color:oklch(0.55 0.03 55);">Calendar not connected yet — this week's view fills in once the server has Google credentials.</div>`;
+      return;
+    }
+    wk.innerHTML = (d.days || []).map(day => {
+      const bg = day.is_today ? 'oklch(0.94 0.03 48 / 0.4)' : 'oklch(0.995 0.005 88)';
+      const headColor = day.is_today ? 'oklch(0.42 0.1 42)' : 'oklch(0.4 0.02 60)';
+      const ev = (day.events || []).map(e => {
+        const dot = e.cal === 'room' ? 'oklch(0.62 0.13 148)' : 'oklch(0.58 0.115 42)';
+        return `<div style="padding:5px 6px; border-radius:8px; background:oklch(0.975 0.01 84); border-left:3px solid ${dot}; margin-bottom:5px;">
+          <div style="font:600 10px 'Work Sans',sans-serif; font-variant-numeric:tabular-nums; color:oklch(0.42 0.02 60);">${esc(e.time)}</div>
+          <div style="font-size:10px; line-height:1.25; color:oklch(0.4 0.02 60); margin-top:2px;">${esc(e.title)}</div>
+        </div>`;
+      }).join('') || `<div style="text-align:center; font-size:11.5px; color:oklch(0.62 0.02 60); padding-top:16px;">—</div>`;
+      return `<div style="flex:1; min-width:0; background:${bg}; border:1px solid oklch(0.91 0.015 80); border-radius:14px; padding:0 0 12px; display:flex; flex-direction:column; min-height:360px;">
+        <div style="padding:11px 6px 9px; text-align:center; font:600 12px 'Work Sans',sans-serif; color:${headColor};">${esc(day.label)}</div>
+        <div style="flex:1; padding:2px 8px 0;">${ev}</div>
+      </div>`;
+    }).join('');
+  }
+};
+
+// -------------------------------------------------------------------------
+// Enquiries + booking flow
+// -------------------------------------------------------------------------
+const Enq = {
+  inbox: [], booking: null, doneClientId: null, _chosenEl: null,
+  showStep(n) { [0,1,2].forEach(i => $('#enq-step'+i).classList.toggle('hidden', i !== n)); },
+  async loadInbox() {
+    this.showStep(0);
+    try {
+      const d = await api('/admin/api/enquiries');
+      this.inbox = (d.enquiries || []).filter(e => e.status === 'new');
+      const wrap = $('#enq-inbox');
+      if (!this.inbox.length) { wrap.innerHTML = ''; $('#enq-inbox-empty').classList.remove('hidden'); }
+      else {
+        $('#enq-inbox-empty').classList.add('hidden');
+        wrap.innerHTML = this.inbox.map(q =>
+          `<div class="card" style="padding:14px 16px; margin-bottom:10px;">
+            <div style="display:flex; align-items:baseline; gap:8px;"><div style="font:600 14px 'Work Sans',sans-serif;">${esc(q.name || 'New enquiry')}</div><div style="font:600 10px 'Work Sans',sans-serif; letter-spacing:0.08em; color:oklch(0.55 0.03 55);">${esc((q.via||'').toUpperCase())}</div></div>
+            <div style="font-size:12.5px; line-height:1.55; color:oklch(0.5 0.02 58); margin-top:5px;">${esc(q.preview || q.raw_text)}</div>
+            <button class="btn-ghost" style="margin-top:10px; padding:6px 14px; font-size:12px;" onclick="Enq.openEnquiry(${q.id})">Open</button>
+          </div>`).join('');
+      }
+      updateEnqBadge();
+    } catch (e) { toast('Could not load enquiries'); }
+  },
+  useSample() {
+    $('#enq-text').value = "Hi Phoenix, it's Maya Roberts — a friend recommended you. I've had a lot of tension headaches and would love a craniosacral session at your Waterloo clinic. I'm free Thursday or Friday afternoon next week. My number is 07700 900321. Thank you!";
+  },
+  async analyse() {
+    const text = $('#enq-text').value.trim();
+    if (!text) { toast('Paste a message first'); return; }
+    $('#enq-analyse-label').textContent = 'Reading…';
+    let parsed = {name:'',phone:'',clinic:'',preference:''};
+    try { parsed = await api('/admin/api/enquiries/analyse', {method:'POST', body: JSON.stringify({text})}); } catch (e) {}
+    let enq = null;
+    try { const r = await api('/admin/api/enquiries', {method:'POST', body: JSON.stringify({raw_text:text, name:parsed.name, via:'WhatsApp'})}); enq = r.enquiry; } catch (e) {}
+    $('#enq-analyse-label').textContent = 'Read message →';
+    $('#enq-text').value = '';
+    this.startBooking({enquiry_id: enq ? enq.id : null, name: parsed.name, phone: parsed.phone, clinic: parsed.clinic || 'waterloo', preference: parsed.preference});
+  },
+  async openEnquiry(id) {
+    const q = this.inbox.find(e => e.id === id); if (!q) return;
+    let parsed = {name:q.name, phone:'', clinic:'', preference:''};
+    try { parsed = await api('/admin/api/enquiries/analyse', {method:'POST', body: JSON.stringify({text:q.raw_text})}); } catch (e) {}
+    this.startBooking({enquiry_id: id, name: parsed.name || q.name, phone: parsed.phone, clinic: parsed.clinic || 'waterloo', preference: parsed.preference});
+  },
+  async startBooking(b) {
+    let isNew = true, existing = null;
+    if (b.name) {
+      try {
+        const d = await api('/admin/api/clients?q=' + encodeURIComponent(b.name));
+        existing = (d.clients || []).find(c => c.name.toLowerCase() === b.name.toLowerCase());
+        if (existing) isNew = false;
+      } catch (e) {}
+    }
+    this.booking = {...b, isNew, client: existing, slot: null};
+    this._chosenEl = null;
+    this.showStep(1);
+    $('#bk-name').value = b.name || '';
+    this.renderBadge();
+    $('#bk-sub').textContent = [b.phone ? ('Phone: ' + b.phone) : '', b.preference ? ('Asked for: ' + b.preference) : ''].filter(Boolean).join('  ·  ');
+    this.pickClinic(b.clinic || 'waterloo');
+  },
+  renderBadge() {
+    const badge = $('#bk-badge');
+    if (this.booking.isNew) { badge.textContent = 'NEW CLIENT'; badge.style.color = 'oklch(0.58 0.115 42)'; }
+    else { badge.textContent = 'EXISTING — ONE RECORD KEPT'; badge.style.color = 'oklch(0.42 0.08 148)'; }
+  },
+  pickClinic(clinic) {
+    this.booking.clinic = clinic;
+    const active = 'background:oklch(0.58 0.115 42); color:oklch(0.98 0.008 85);';
+    const idle = 'background:transparent; color:oklch(0.5 0.03 55);';
+    const base = "font:600 12.5px 'Work Sans',sans-serif; padding:8px 16px; border-radius:999px; cursor:pointer; user-select:none; ";
+    $('#seg-waterloo').setAttribute('style', base + (clinic === 'waterloo' ? active : idle));
+    $('#seg-bethnal').setAttribute('style', base + (clinic === 'bethnal_green' ? active : idle));
+    $('#grid-clinic-label').textContent = clinic === 'bethnal_green' ? 'BETHNAL GREEN' : 'WATERLOO';
+    this.booking.slot = null; this._chosenEl = null;
+    $('#bk-panel').classList.add('hidden'); $('#bk-noslot').classList.remove('hidden');
+    this.loadGrid();
+  },
+  async loadGrid() {
+    const grid = $('#bk-grid');
+    this._chosenEl = null;
+    grid.innerHTML = `<div style="padding:20px; font-size:12.5px; color:oklch(0.6 0.02 60);">Loading availability…</div>`;
+    let data;
+    try { data = await api('/admin/api/availability/week?clinic=' + this.booking.clinic); }
+    catch (e) { grid.innerHTML = `<div style="padding:20px; font-size:12.5px; color:oklch(0.55 0.03 55);">Availability needs the calendar connected on the server.</div>`; return; }
+    const ROW = 13; // px per 15 minutes
+    const notice = data.calendar_ok ? '' :
+      `<div style="margin-bottom:8px; font-size:11.5px; color:oklch(0.5 0.09 75);">Couldn't read Google Calendar — showing an empty week. Bookings will still be created.</div>`;
+    const axis = `<div style="width:32px; flex:none;"><div style="height:22px;"></div>` +
+      Array.from({length:13}, (_,i)=>8+i).map(h =>
+        `<div style="height:${ROW*4}px; font-size:9px; color:oklch(0.62 0.02 60); font-variant-numeric:tabular-nums;">${String(h).padStart(2,'0')}:00</div>`).join('') +
+      `</div>`;
+    const cols = (data.days || []).map(day => {
+      const headColor = day.closed ? 'oklch(0.65 0.02 60)' : 'oklch(0.42 0.02 60)';
+      let body;
+      if (day.closed) {
+        body = `<div style="text-align:center; font-size:10px; color:oklch(0.65 0.02 60); padding-top:28px;">Closed</div>`;
+      } else {
+        body = (day.blocks || []).map(b => {
+          if (b.type === 'busy') {
+            const hgt = (b.end_min - b.start_min) / 15 * ROW;
+            const c = b.kind === 'chalk'
+                ? {bg:'oklch(0.94 0.03 148)', bd:'oklch(0.72 0.09 148)', tc:'oklch(0.42 0.08 148)'}
+              : b.kind === 'session'
+                ? {bg:'oklch(0.94 0.03 48)', bd:'oklch(0.58 0.115 42 / 0.4)', tc:'oklch(0.42 0.1 42)'}
+                : {bg:'oklch(0.9 0.012 80)', bd:'oklch(0.85 0.012 80)', tc:'oklch(0.5 0.02 58)'};
+            return `<div title="${esc(b.time + ' — ' + b.title)}" style="height:${hgt}px; box-sizing:border-box; margin:0 1px 1px; border-radius:6px; background:${c.bg}; border:1px solid ${c.bd}; padding:3px 5px; overflow:hidden;">
+              <div style="font:600 8.5px 'Work Sans',sans-serif; color:${c.tc}; font-variant-numeric:tabular-nums;">${esc(b.time)}</div>
+              <div style="font-size:8px; line-height:1.15; color:oklch(0.4 0.02 60);">${esc(b.title)}</div>
+            </div>`;
+          }
+          return b.subslots.map(s => {
+            const bg = s.free ? 'oklch(0.9 0.05 148)' : 'oklch(0.955 0.008 84)';
+            const cursor = s.free ? 'pointer' : 'default';
+            const click = s.free ? `onclick="Enq.pickSlot('${day.date}',${s.min},'${esc(day.label)}','${s.time}')"` : '';
+            return `<div data-cell="${day.date}_${s.min}" ${click} title="${esc(day.label + ' ' + s.time)}" style="height:${ROW}px; margin:0 1px 1px; border-radius:3px; background:${bg}; cursor:${cursor};"></div>`;
+          }).join('');
+        }).join('');
+      }
+      return `<div style="flex:1; min-width:0;">
+        <div style="height:22px; text-align:center; font:600 11px 'Work Sans',sans-serif; color:${headColor};">${esc(day.label)}</div>
+        <div>${body}</div>
+      </div>`;
+    }).join('');
+    grid.innerHTML = `<div style="width:100%;">${notice}<div style="display:flex; gap:4px;">${axis}${cols}</div></div>`;
+  },
+  pickSlot(date, min, label, time) {
+    if (this._chosenEl) this._chosenEl.style.background = 'oklch(0.9 0.05 148)';
+    const el = $('#bk-grid [data-cell="' + date + '_' + min + '"]');
+    if (el) { el.style.background = 'oklch(0.58 0.115 42)'; this._chosenEl = el; }
+    this.booking.slot = {date, min, time, label};
+    $('#bk-noslot').classList.add('hidden');
+    $('#bk-panel').classList.remove('hidden');
+    const clinicLabel = this.booking.clinic === 'bethnal_green' ? 'Bethnal Green' : 'Waterloo';
+    const price = this.booking.clinic === 'bethnal_green' ? '£30–60 sliding scale' : '£80';
+    $('#bk-slot-title').textContent = label + ' · ' + time;
+    $('#bk-slot-sub').textContent = '60 min · ' + clinicLabel + ' · ' + price;
+    this.renderEvents(min);
+    this.refreshEmail();
+  },
+  renderEvents(min) {
+    const name = ($('#bk-name').value.trim()) || 'Client';
+    const f = (m) => String(Math.floor(m/60)).padStart(2,'0') + ':' + String(((m%60)+60)%60).padStart(2,'0');
+    let evs;
+    if (this.booking.clinic === 'bethnal_green') {
+      evs = [
+        {title:'Phoenix', cal:'Chalk Farm calendar · 2 h block', range:f(min-30)+'–'+f(min+90), dot:'oklch(0.62 0.13 148)'},
+        {title:name+' — Bethnal Green', cal:'Personal calendar', range:f(min)+'–'+f(min+60), dot:'oklch(0.58 0.115 42)'},
+      ];
+    } else {
+      evs = [
+        {title:name+' — Waterloo', cal:'Personal calendar', range:f(min)+'–'+f(min+60), dot:'oklch(0.58 0.115 42)'},
+        {title:'R5 - Phoenix', cal:'Room calendar', range:f(min)+'–'+f(min+60), dot:'oklch(0.62 0.1 78)'},
+      ];
+    }
+    $('#bk-events').innerHTML = evs.map(e =>
+      `<div style="display:flex; gap:10px; align-items:flex-start; padding:9px 11px; background:oklch(0.975 0.01 84); border-radius:10px; margin-bottom:6px;">
+        <span style="width:8px; height:8px; flex:none; border-radius:50%; margin-top:4px; background:${e.dot};"></span>
+        <div style="flex:1; min-width:0;"><div style="font:600 12.5px 'Work Sans',sans-serif;">${esc(e.title)}</div><div style="font-size:11px; color:oklch(0.55 0.03 55); margin-top:1px;">${esc(e.cal)} · ${esc(e.range)} · reminders on</div></div>
+      </div>`).join('');
+  },
+  async refreshEmail() {
+    const name = ($('#bk-name').value.trim()) || 'there';
+    let tmpl = '', access = '';
+    try { const s = await api('/admin/api/settings'); tmpl = s['email_template_' + this.booking.clinic] || ''; access = s.access_note || ''; } catch (e) {}
+    $('#bk-email').value = tmpl.replace(/\{name\}/g, name).replace(/\{accessNote\}/g, access);
+    $('#bk-email-hint').textContent = this.booking.isNew ? '' : '— returning client, just the invite';
+    if (this.booking.client && this.booking.client.email) $('#bk-clientemail').value = this.booking.client.email;
+  },
+  async confirmBooking() {
+    if (!this.booking.slot) { toast('Pick a slot first'); return; }
+    const name = $('#bk-name').value.trim();
+    if (!name) { toast('Add a name'); return; }
+    $('#bk-confirm-label').textContent = 'Creating…';
+    try {
+      const res = await api('/admin/api/book', {method:'POST', body: JSON.stringify({
+        date: this.booking.slot.date, time: this.booking.slot.time, clinic: this.booking.clinic,
+        name, email: $('#bk-clientemail').value.trim(), enquiry_id: this.booking.enquiry_id})});
+      this.doneClientId = res.client_id;
+      this.showConfirmed(name, res);
+    } catch (e) { toast('Could not create booking'); }
+    $('#bk-confirm-label').textContent = 'Create events & send email';
+  },
+  showConfirmed(name, res) {
+    this.showStep(2);
+    $('#done-title').textContent = name + ' is booked in';
+    $('#done-when').textContent = res.confirmed_time || (this.booking.slot.label + ' · ' + this.booking.slot.time);
+    const items = [];
+    items.push(res.success
+      ? 'Pending session added to your Google Calendar (lavender)'
+      : 'Saved to Control Tower — the calendar event is created once the server calendar is connected');
+    items.push(res.created_client ? 'New client record created' : 'Linked to the existing client record');
+    items.push('Confirmation email ready to copy — nothing is sent automatically');
+    $('#done-items').innerHTML = items.map(i =>
+      `<div style="display:flex; gap:9px; font-size:13px; line-height:1.5; color:oklch(0.42 0.02 60);"><span style="color:oklch(0.42 0.08 148);">✓</span><span>${esc(i)}</span></div>`).join('');
+  },
+  copyEmail() { const t = $('#bk-email').value; if (navigator.clipboard) navigator.clipboard.writeText(t); toast('Email text copied'); },
+  backToInbox() { this.loadInbox(); },
+  goBookedClient() { if (this.doneClientId) Clients.gotoFromToday(this.doneClientId); else Nav.go('clients'); },
+};
+
+// -------------------------------------------------------------------------
+// Import
+// -------------------------------------------------------------------------
+const Importer = {
+  sample() {
+    $('#import-csv').value = "name,email,phone,clinic\nMaya Roberts,maya@example.com,07700 900321,waterloo\nDaniel Cole,daniel@example.com,07700 900654,bethnal green";
+  },
+  async run() {
+    const csv = $('#import-csv').value.trim();
+    if (!csv) { toast('Paste some CSV first'); return; }
+    try {
+      const res = await api('/admin/api/import', {method:'POST', body: JSON.stringify({csv})});
+      const el = $('#import-result'); el.classList.remove('hidden');
+      el.innerHTML = `<div style="font:500 16px 'Newsreader',serif; margin-bottom:8px;">${res.created} imported · ${res.skipped} skipped</div>` +
+        (res.rows || []).map(r => `<div style="display:flex; gap:9px; font-size:13px; padding:4px 0; color:oklch(0.42 0.02 60);"><span style="color:oklch(0.42 0.08 148);">✓</span><span>${esc(r.name)} — ${esc(r.action)}</span></div>`).join('');
+      toast(res.created + ' clients imported');
+    } catch (e) { toast('Import failed: ' + e.message); }
+  }
+};
+
+// -------------------------------------------------------------------------
+// Settings
+// -------------------------------------------------------------------------
+const Settings = {
+  data: {}, tmplClinic: 'waterloo', accessEdit: false, tmplEdit: false,
+  async load() {
+    try { this.data = await api('/admin/api/settings'); } catch (e) { toast('Could not load settings'); return; }
+    this.accessEdit = false; this.tmplEdit = false;
+    this.renderAccess(); this.renderTemplate();
+  },
+  renderAccess() {
+    $('#access-view').textContent = '"' + (this.data.access_note || '') + '"';
+    $('#access-view').classList.toggle('hidden', this.accessEdit);
+    $('#access-edit').classList.toggle('hidden', !this.accessEdit);
+    $('#access-edit-label').textContent = this.accessEdit ? 'Cancel' : 'Edit';
+    if (this.accessEdit) $('#access-text').value = this.data.access_note || '';
+  },
+  toggleAccess() { this.accessEdit = !this.accessEdit; this.renderAccess(); },
+  async saveAccess() {
+    const v = $('#access-text').value;
+    try { await api('/admin/api/settings', {method:'PUT', body: JSON.stringify({access_note: v})}); this.data.access_note = v; this.accessEdit = false; this.renderAccess(); toast('Saved'); }
+    catch (e) { toast('Could not save'); }
+  },
+  pickTemplate(clinic) { this.tmplClinic = clinic; this.tmplEdit = false; this.renderTemplate(); },
+  renderTemplate() {
+    const key = 'email_template_' + this.tmplClinic;
+    const active = 'background:oklch(0.58 0.115 42); color:oklch(0.98 0.008 85);', idle = 'background:transparent; color:oklch(0.5 0.03 55);';
+    const base = "font:600 12.5px 'Work Sans',sans-serif; padding:7px 14px; border-radius:999px; cursor:pointer; user-select:none; ";
+    $('#tmpl-seg-waterloo').setAttribute('style', base + (this.tmplClinic === 'waterloo' ? active : idle));
+    $('#tmpl-seg-bethnal').setAttribute('style', base + (this.tmplClinic === 'bethnal_green' ? active : idle));
+    $('#tmpl-view').textContent = this.data[key] || '';
+    $('#tmpl-view').classList.toggle('hidden', this.tmplEdit);
+    $('#tmpl-edit').classList.toggle('hidden', !this.tmplEdit);
+    $('#tmpl-edit-label').textContent = this.tmplEdit ? 'Cancel' : 'Edit';
+    if (this.tmplEdit) $('#tmpl-text').value = this.data[key] || '';
+  },
+  toggleTemplate() { this.tmplEdit = !this.tmplEdit; this.renderTemplate(); },
+  async saveTemplate() {
+    const key = 'email_template_' + this.tmplClinic;
+    const payload = {}; payload[key] = $('#tmpl-text').value;
+    try { await api('/admin/api/settings', {method:'PUT', body: JSON.stringify(payload)}); this.data[key] = $('#tmpl-text').value; this.tmplEdit = false; this.renderTemplate(); toast('Saved'); }
+    catch (e) { toast('Could not save'); }
+  }
+};
+
+// boot
+Nav.go('today');
+updateEnqBadge();
+</script>
+</body>
+</html>

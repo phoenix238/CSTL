@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CSTL Control Tower</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Work+Sans:wght@400;500;600;700&display=swap">
+<style>
+  html, body { margin: 0; height: 100%; }
+  body {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh;
+    background: oklch(0.966 0.013 83);
+    color: oklch(0.3 0.02 60);
+    font-family: 'Work Sans', sans-serif;
+  }
+  .card {
+    width: 340px; padding: 34px 32px 30px;
+    background: oklch(0.995 0.005 88);
+    border: 1px solid oklch(0.91 0.015 80);
+    border-radius: 20px;
+    box-shadow: 0 1px 2px oklch(0.4 0.03 60 / 0.05), 0 12px 40px oklch(0.4 0.03 60 / 0.08);
+    text-align: center;
+  }
+  .logo {
+    width: 46px; height: 46px; margin: 0 auto 16px;
+    border-radius: 50%; background: oklch(0.58 0.115 42);
+    display: flex; align-items: center; justify-content: center;
+  }
+  h1 { margin: 0 0 4px; font: 400 24px/1.15 'Newsreader', serif; }
+  .sub { font-size: 12.5px; color: oklch(0.55 0.03 55); margin-bottom: 22px; }
+  input[type=password] {
+    width: 100%; box-sizing: border-box;
+    font: 400 15px 'Work Sans', sans-serif; color: oklch(0.3 0.02 60);
+    background: oklch(0.975 0.01 84);
+    border: 1px solid oklch(0.89 0.015 80); border-radius: 999px;
+    padding: 13px 18px; outline: none; text-align: center;
+  }
+  input[type=password]:focus { border-color: oklch(0.58 0.115 42 / 0.6); }
+  button {
+    width: 100%; margin-top: 12px;
+    font: 600 14px 'Work Sans', sans-serif; color: oklch(0.98 0.008 85);
+    background: oklch(0.58 0.115 42); border: none; border-radius: 999px;
+    padding: 13px; cursor: pointer;
+  }
+  button:hover { background: oklch(0.52 0.115 42); }
+  .error { color: oklch(0.52 0.16 25); font-size: 12.5px; margin-top: 12px; }
+  .disabled { font-size: 13px; line-height: 1.6; color: oklch(0.5 0.05 55); }
+  code { background: oklch(0.94 0.015 82); padding: 1px 6px; border-radius: 5px; font-size: 12px; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">
+      <svg width="26" height="26" viewBox="0 0 40 40" fill="none" stroke="oklch(0.98 0.008 85)" stroke-width="0.9" style="opacity:0.95;">
+        <circle cx="20" cy="20" r="6"></circle><circle cx="26" cy="20" r="6"></circle>
+        <circle cx="14" cy="20" r="6"></circle><circle cx="23" cy="14.8" r="6"></circle>
+        <circle cx="17" cy="14.8" r="6"></circle><circle cx="23" cy="25.2" r="6"></circle>
+        <circle cx="17" cy="25.2" r="6"></circle><circle cx="20" cy="9.6" r="6"></circle>
+        <circle cx="20" cy="30.4" r="6"></circle>
+      </svg>
+    </div>
+    <h1>Control Tower</h1>
+    {% if disabled %}
+      <div class="sub">Phoenix Tanner · CSTL</div>
+      <div class="disabled">
+        The admin dashboard isn't switched on yet.<br><br>
+        Set an <code>ADMIN_PASSWORD</code> (and a <code>SECRET_KEY</code>)
+        in the Render environment settings, then reload this page.
+      </div>
+    {% else %}
+      <div class="sub">Phoenix Tanner · CSTL</div>
+      <form method="POST" action="{{ url_for('admin.do_login') }}">
+        <input type="password" name="password" placeholder="Password" autofocus autocomplete="current-password">
+        <button type="submit">Enter</button>
+        {% if error %}<div class="error">That password didn't match. Try again.</div>{% endif %}
+      </form>
+    {% endif %}
+  </div>
+</body>
+</html>
